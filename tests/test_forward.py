@@ -16,7 +16,6 @@ def test_modify_x_w_matrix():
     X_new, W_new = modify_x_w(X, W, b)
     np.testing.assert_allclose(X_new @ W_new, X @ W + b)
 
-@pytest.mark.skip(reason="Enable once §4.2 mlp_forward is implemented")
 def test_mlp_forward_cache_keys():
     from mlp.init import init_mlp
     model = init_mlp([2, 5, 1])
