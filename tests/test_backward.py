@@ -1,15 +1,6 @@
-"""
-Tests for src/mlp/backward.py (§5.2).
-
-The numerical gradient check below is the single most valuable test in the
-whole project. If it passes, your manual backprop derivation is almost
-certainly correct.
-"""
 import numpy as np
 import pytest
 
-
-@pytest.mark.skip(reason="Enable once backprop, mlp_forward, and mse_loss are implemented")
 def test_backprop_matches_numerical_gradient():
     from mlp.init import init_mlp
     from mlp.forward import mlp_forward
