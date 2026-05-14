@@ -2,42 +2,53 @@ Gradient Descent MLP
 
 A multilayer perceptron trained with gradient descent, implemented entirely in NumPy with no machine learning frameworks. The project covers forward pass, backpropagation, MSE loss, and a gradient descent optimizer, all written from scratch. Analytical gradients are validated against numerical finite-difference checks. A hyperparameter search is included that follows strict train/validation/test discipline. The codebase is structured as a modular Python package with a full pytest suite.
 
-The accompanying Jupyter notebook (notebooks/) contains extended notes, derivations, and step-by-step walkthroughs of all the math and implementation decisions.
-
 
 THE PROBLEM
-
 The network learns to approximate the surface Z = X^2 - Y^2 + 1.2 + noise, where X and Y are drawn uniformly from [-1, 1] and noise is Gaussian with mean 0 and standard deviation 0.5. Inputs are 2D (X, Y) and the target is a scalar Z. Because the irreducible noise has standard deviation 0.5, the theoretical minimum MSE is around 0.25, which is treated as the practical lower bound.
 
 
-PROJECT STRUCTURE
+RESULTS 
+Depth comparison (experiment 01, 2000 iterations, lr=0.05, architecture width=5):
 
-src/mlp/
-    activations.py   sigmoid forward and backward
-    forward.py       bias augmentation (modify_x_w) and mlp_forward
-    backward.py      backprop
-    loss.py          MSE loss and its gradient
-    init.py          weight matrix and MLP initialisation
-    optimizer.py     grad_descent
-    data.py          sample_points and create_train_and_test
-    tuning.py        train/val split, grad_descent_with_validation, hyperparameter_search
-    plotting.py      3D scatter and surface plotting utilities
+    1-layer  [2, 5, 1]    initial MSE: 9.6689   final MSE: 0.3838
+    2-layer  [2, 5, 5, 1]  initial MSE: 19.7019  final MSE: 0.4085
 
-experiments/
-    01_one_vs_two_layer.py        depth comparison, learning curves
-    02_with_validation.py         adds a validation split to the learning curve
-    03_hyperparameter_search.py   grid search over architectures and learning rates
+<img width="320" height="230" alt="depth_comparison" src="https://github.com/user-attachments/assets/951b7bec-49da-496b-b90a-556ee83de55c" /> <img width="336" height="230" alt="learning_curve" src="https://github.com/user-attachments/assets/96b43f13-b540-4b37-b352-a5b84d4f8ac1" />
 
-tests/
-    test_activations.py
-    test_backward.py
-    test_data.py
-    test_forward.py
-    test_init.py
-    test_loss.py
-    test_optimizer.py
-    test_tuning.py
 
+
+Both models converge to roughly the same final training loss near the irreducible noise floor (~0.25-0.40). The additional depth does not yield a measurable improvement on this dataset at this scale, and increases the initial loss because there are more weights to initialise.
+
+<img width="424" height="300" alt="heat_map" src="https://github.com/user-attachments/assets/27131084-2c87-4adb-b7af-4d1693b251ae" /> <img width="361" height="300" alt="trained_predictions_vs_true_data" src="https://github.com/user-attachments/assets/4d8058c8-ff55-4c93-8266-8e1fe3858f1a" />
+
+
+
+Hyperparameter search (experiment 03, 4 architectures x 3 learning rates, 2000 iterations):
+
+Data split: 80 points for training, 20 for validation, 20 for test. The test set was not accessed until after the best configuration was selected.
+
+    arch                   lr     train      val        best_val
+    [2, 10, 1]             0.10   0.2432     0.3391     0.3391
+    [2, 5, 1]              0.10   0.3014     0.4128     0.4128
+    [2, 10, 10, 1]         0.10   0.3529     0.4512     0.4512
+    [2, 5, 1]              0.01   0.3814     0.4571     0.4571
+    [2, 10, 1]             0.01   0.3756     0.4646     0.4646
+    [2, 5, 5, 1]           0.10   0.3873     0.4695     0.4695
+    [2, 5, 1]              0.05   0.3634     0.4698     0.4519
+    [2, 10, 1]             0.05   0.3603     0.4715     0.4639
+    [2, 10, 10, 1]         0.05   0.3921     0.4786     0.4745
+    [2, 10, 10, 1]         0.01   0.3921     0.4787     0.4740
+    [2, 5, 5, 1]           0.05   0.3919     0.4788     0.4788
+    [2, 5, 5, 1]           0.01   0.3944     0.4831     0.4810
+
+Selected configuration (lowest validation MSE):
+    architecture:  [2, 10, 1]
+    learning rate: 0.1
+    train MSE:     0.2432
+    val MSE:       0.3391
+    test MSE:      0.2536
+
+The test MSE of 0.2536 is close to the theoretical noise floor, indicating the model learned the underlying surface well and did not overfit.
 
 INSTALLATION
 
@@ -51,14 +62,10 @@ INSTALLATION
     pip install -r requirements.txt
 
 - Dependencies (requirements.txt):
-
     numpy>=1.24
     matplotlib>=3.7
     jupyter>=1.0
     pytest>=7.4
-
-
-- Usage examples
 
 - Training a model from scratch:
     import numpy as np
@@ -96,7 +103,7 @@ INSTALLATION
     jupyter notebook notebooks/
 
 
-Testing
+TESTING
 
 To run all the test from the project root, run :
     pytest tests/ -v
@@ -125,43 +132,6 @@ test_optimizer
 
 test_tuning
     split_train_validation produces the correct shapes and no row appears in both splits. The split is reproducible when the same seed is used. grad_descent_with_validation returns loss lists of length iterations+1 with all finite values. hyperparameter_search returns one result dict per configuration with the expected keys and correct curve lengths.
-
-
-Experiment results
-
-Depth comparison (experiment 01, 2000 iterations, lr=0.05, architecture width=5):
-
-    1-layer  [2, 5, 1]    initial MSE: 9.6689   final MSE: 0.3838
-    2-layer  [2, 5, 5, 1]  initial MSE: 19.7019  final MSE: 0.4085
-
-Both models converge to roughly the same final training loss near the irreducible noise floor (~0.25-0.40). The additional depth does not yield a measurable improvement on this dataset at this scale, and increases the initial loss because there are more weights to initialise.
-
-Hyperparameter search (experiment 03, 4 architectures x 3 learning rates, 2000 iterations):
-
-Data split: 80 points for training, 20 for validation, 20 for test. The test set was not accessed until after the best configuration was selected.
-
-    arch                   lr     train      val        best_val
-    [2, 10, 1]             0.10   0.2432     0.3391     0.3391
-    [2, 5, 1]              0.10   0.3014     0.4128     0.4128
-    [2, 10, 10, 1]         0.10   0.3529     0.4512     0.4512
-    [2, 5, 1]              0.01   0.3814     0.4571     0.4571
-    [2, 10, 1]             0.01   0.3756     0.4646     0.4646
-    [2, 5, 5, 1]           0.10   0.3873     0.4695     0.4695
-    [2, 5, 1]              0.05   0.3634     0.4698     0.4519
-    [2, 10, 1]             0.05   0.3603     0.4715     0.4639
-    [2, 10, 10, 1]         0.05   0.3921     0.4786     0.4745
-    [2, 10, 10, 1]         0.01   0.3921     0.4787     0.4740
-    [2, 5, 5, 1]           0.05   0.3919     0.4788     0.4788
-    [2, 5, 5, 1]           0.01   0.3944     0.4831     0.4810
-
-Selected configuration (lowest validation MSE):
-    architecture:  [2, 10, 1]
-    learning rate: 0.1
-    train MSE:     0.2432
-    val MSE:       0.3391
-    test MSE:      0.2536
-
-The test MSE of 0.2536 is close to the theoretical noise floor, indicating the model learned the underlying surface well and did not overfit.
 
 
 Roadmap
